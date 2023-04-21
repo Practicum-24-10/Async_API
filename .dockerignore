@@ -1,0 +1,6 @@
+/tasks
+/dump
+/venv
+README.md
+Dockerfile
+docker-compose.yml
