@@ -1,0 +1,76 @@
+version: '3.9'
+
+services:
+    postgres:
+      image: postgres:13
+      restart: always
+      volumes:
+        - pg_volume:/var/lib/postgresql/data/
+        - ./dump:/docker-entrypoint-initdb.d
+      env_file:
+        - .env
+      environment:
+        - POSTGRES_USER=${DB_USER}
+        - POSTGRES_PASSWORD=${DB_PASSWORD}
+        - POSTGRES_DB=${DB_NAME}
+      healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U app -d movies_database" ]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+    elasticsearch:
+      image: ghcr.io/yp-middle-python-24/elasticsearch:8.7.0
+      environment:
+        - discovery.type=${DISCOVERY_TYPE}
+        - xpack.security.enabled=${XPACK_SEC_ENABLE}
+      volumes:
+        - elastic_volume:/usr/share/elasticsearch/data
+      env_file:
+        - .env
+      ports:
+        - '9200:9200'
+      healthcheck:
+        test: curl -u elastic:elastic -s -f localhost:9200/_cat/health >/dev/null || exit 1
+        interval: 30s
+        timeout: 10s
+        retries: 5
+      depends_on:
+        postgres:
+          condition: service_healthy
+
+    redis:
+      image: redis:7.0.11-alpine
+      ports:
+        - '6379:6379'
+      volumes:
+        - redis_data:/data
+
+    etl:
+      image: ghcr.io/tyshbyr/etl:latest
+      env_file:
+        - .env
+      volumes:
+        - storage:/postgres_to_es/storage
+      environment:
+        - PYTHONPATH=/
+      depends_on:
+        elasticsearch:
+          condition: service_healthy      
+
+    api:
+      build: .
+      env_file:
+        - .env
+      ports:
+          - '8000:8000'
+      depends_on:
+        - postgres
+        - elasticsearch 
+        - etl
+
+volumes:
+    pg_volume:
+    elastic_volume:
+    storage:
+    redis_data:
