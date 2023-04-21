@@ -1,6 +1,6 @@
-from .genre import Genre
-from .mixins import MovieMixin
-from .person import Person
+from src.models.genre import Genre
+from src.models.mixins import MovieMixin
+from src.models.person import Person
 
 
 class Film(MovieMixin):
