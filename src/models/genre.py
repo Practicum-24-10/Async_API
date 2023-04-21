@@ -1,4 +1,4 @@
-from .mixins import MovieMixin
+from src.models.mixins import MovieMixin
 
 
 class Genre(MovieMixin):
