@@ -31,7 +31,7 @@ class MixinModel:
         await self.redis.set(str(_id), data, CACHE_EXPIRE_IN_SECONDS)
 
     async def _get_by_id_from_elastic(
-        self, index: str, _id: str
+            self, index: str, _id: str
     ) -> dict[str, Any] | None:
         """
         Получение данных индекса по id из elastic
@@ -45,8 +45,8 @@ class MixinModel:
             return None
         return doc["_source"]
 
-    async def _get_all_from_elastic(
-            self, index: str
+    async def _search_from_elastic(
+            self, index: str, body,
     ) -> list[dict[str, Any]] | None:
         """
         Получение всех данных индекса из elastic
@@ -54,7 +54,7 @@ class MixinModel:
         :return: лист с данными
         """
         try:
-            doc = await self.elastic.search(index=index)
+            doc = await self.elastic.search(index=index, body=body)
         except NotFoundError:
             return None
         return doc["hits"]["hits"]
