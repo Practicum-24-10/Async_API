@@ -46,11 +46,12 @@ class MixinModel:
         return doc["_source"]
 
     async def _search_from_elastic(
-            self, index: str, body,
+            self, index: str, body: dict[str, Any],
     ) -> list[dict[str, Any]] | None:
         """
         Получение всех данных индекса из elastic
         :param index: индекс elastic
+        :param body: параметры поиска
         :return: лист с данными
         """
         try:
