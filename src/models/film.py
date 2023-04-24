@@ -7,7 +7,7 @@ class Film(MovieMixin):
     title: str
     description: str
     imdb_rating: float
-    genre: list[Genre]
-    director: list[Person] | None = []
+    # genre: list[Genre]
+    directors: list[Person] | None = []
     actors: list[Person]
     writers: list[Person]
