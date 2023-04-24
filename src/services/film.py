@@ -3,7 +3,7 @@ from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
-from redis.asyncio import Redis
+from aioredis import Redis
 
 from src.db.elastic import get_elastic
 from src.db.redis_db import get_redis
