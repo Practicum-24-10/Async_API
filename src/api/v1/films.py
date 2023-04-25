@@ -1,13 +1,12 @@
+from enum import Enum
 from http import HTTPStatus
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from services.film import FilmService, get_film_service
 from src.models.film import Genre, Person
-from uuid import UUID
-from enum import Enum
-
 
 router = APIRouter()
 
@@ -36,6 +35,7 @@ class FilmDetail(FilmShort):
 
 @router.get('/',
             response_model=list[FilmShort],
+            response_model_by_alias=False,
             summary="Главная страница")
 async def film_list(
     sort: OrderingFilms,
@@ -50,6 +50,24 @@ async def film_list(
         sort=sort,
         genre=genre)
     return films
+
+
+
+@router.get('/search',
+            response_model=list[FilmShort],
+            response_model_by_alias=False,
+            summary="Поиск по фильмам")
+async def film_search(
+    query: str,
+    page_size: int = 10,
+    page_number: int = 1,
+    film_service: FilmService = Depends(get_film_service),
+) -> list[FilmShort]:
+    films = await film_service.search_films(
+        query=query,
+        size=page_size, 
+        page=page_number)
+    return films
     
     
         
@@ -57,15 +75,12 @@ async def film_list(
             response_model_by_alias=False,
             response_model=FilmDetail)
 async def film_details(
-    film_id: UUID, film_service: FilmService = Depends(get_film_service)
+    film_id: UUID,
+    film_service: FilmService = Depends(get_film_service)
 ) -> FilmDetail:
     film = await film_service.get_by_id(str(film_id))
     if not film:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail="film not found"
-        )
+            detail="film not found")
     return FilmDetail(**film.dict(by_alias=True))
-
-
-

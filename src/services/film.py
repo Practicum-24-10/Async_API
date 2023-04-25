@@ -1,10 +1,10 @@
 from functools import lru_cache
 from typing import Optional
 
-from fastapi import Depends
-from aioredis import Redis
 import orjson
+from aioredis import Redis
 from elasticsearch import AsyncElasticsearch
+from fastapi import Depends
 
 from src.db.elastic import get_elastic
 from src.db.redis_db import get_redis
@@ -51,12 +51,40 @@ class FilmService(MixinModel):
                 "_source" : ["id", "title", "imdb_rating"]
             }
             if genre:
-                body["query"]["bool"]["filter"].append({"term": {"genres.id": genre}})
+                body["query"]["bool"]["filter"].append(
+                    {"term": {"genres.id": genre}})
             docs = await self._search_from_elastic(self.index, body)
             films = [FilmShort(**i['_source']) for i in docs]
             if not films:
                 return []
-            await self._put_to_cache(cache_id, orjson.dumps([film.dict() for film in films]))
+            await self._put_to_cache(cache_id, orjson.dumps(
+                [film.dict() for film in films]))
+        return films
+    
+    
+    async def search_films(self, size: int, page: int, query: str
+                        ) -> Optional[list]:
+        cache_id = f"""
+                {self.search_films.__name__}{self.index}{size}{page}{query}"""
+        films = await self._get_from_cache(cache_id)
+        if films:
+            films = orjson.loads(films)
+        if not films:
+            body = {
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {"match": {"title": query}},
+                            ]
+                        }
+                    }
+                }
+            docs = await self._search_from_elastic(self.index, body)
+            films = [FilmShort(**i['_source']) for i in docs]
+            if not films:
+                return []
+            await self._put_to_cache(cache_id, orjson.dumps(
+                [film.dict() for film in films]))
         return films
 
 
