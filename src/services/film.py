@@ -16,13 +16,7 @@ class FilmService:
     def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
         self.redis = redis
         self.elastic = elastic
-        
-    # async def _get_film_from_elastic(self, film_id: str) -> Optional[Film]:
-    #     try:
-    #         doc = await self.elastic.get(index="movies", id=film_id)
-    #     except NotFoundError:
-    #         return None
-    #     return Film(**doc["_source"])
+
 
     # get_by_id возвращает объект фильма. Он опционален,
     # так как фильм может отсутствовать в базе
@@ -46,7 +40,6 @@ class FilmService:
             doc = await self.elastic.get(index="movies", id=film_id)
         except NotFoundError:
             return None
-        print('!!!!!!!!!!', doc["_source"]['genre'])
         return Film(**doc["_source"])
 
     async def _film_from_cache(self, film_id: str) -> Optional[Film]:

@@ -17,8 +17,8 @@ class Film(BaseModel):
     title: str
     description: str
     imdb_rating: float
-    # genre: list[Genre]
-    directors: list[Person] | None = []
+    genres: list[Genre] | None = None
+    directors: list[Person]
     actors: list[Person]
     writers: list[Person]
     
@@ -35,13 +35,13 @@ async def film_details(
             status_code=HTTPStatus.NOT_FOUND,
             detail="film not found"
         )
-
+    
     return Film(
                 uuid=film.id,
                 title=film.title,
                 description=film.description,
                 imdb_rating=film.imdb_rating,
-                # genre: list[Genre],
+                genres=film.genre,
                 directors=film.directors,
                 actors=film.actors,
                 writers=film.writers,

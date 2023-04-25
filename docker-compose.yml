@@ -55,7 +55,7 @@ services:
           condition: service_healthy
 
     etl:
-      image: ghcr.io/tyshbyr/etl:latest
+      image: ghcr.io/tyshbyr/etl:0.0.3
       env_file:
         - .env
       volumes:

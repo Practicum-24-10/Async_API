@@ -23,3 +23,8 @@ class PersonES(MovieMixin):
 
 class SearchPersons(BaseModel):
     items: list[PersonES]
+
+class Person(MovieMixin):
+    full_name: str
+    
+    
