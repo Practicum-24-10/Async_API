@@ -11,7 +11,17 @@ from uuid import UUID
 router = APIRouter()
 
 
-class FilmDetail(BaseModel):
+class UUIDMixin(BaseModel):
+    id: UUID
+
+
+class FilmShort(UUIDMixin, BaseModel):
+    title: str
+    imdb_rating: float
+    genre: list[Genre]
+
+
+class FilmDetail(UUIDMixin,BaseModel):
     uuid: UUID = Field(alias='id')
     title: str
     description: str
@@ -20,6 +30,9 @@ class FilmDetail(BaseModel):
     directors: list[Person]
     actors: list[Person]
     writers: list[Person]
+   
+
+
     
         
 @router.get("/{film_id}",
@@ -35,3 +48,6 @@ async def film_details(
             detail="film not found"
         )
     return FilmDetail(**film.dict(by_alias=True))
+
+
+
