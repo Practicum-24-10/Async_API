@@ -9,6 +9,8 @@ services:
         - ./dump:/docker-entrypoint-initdb.d
       env_file:
         - .env
+      ports:
+        - '5432:5432'
       environment:
         - POSTGRES_USER=${DB_USER}
         - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -28,6 +30,8 @@ services:
         - elastic_volume:/usr/share/elasticsearch/data
       env_file:
         - .env
+      ports:
+        - '9200:9200'
       healthcheck:
         test: curl -u elastic:elastic -s -f localhost:9200/_cat/health >/dev/null || exit 1
         interval: 30s
@@ -39,6 +43,8 @@ services:
 
     redis:
       image: redis:7.0.11-alpine
+      ports:
+        - '6379:6379'
       volumes:
         - redis_volume:/data
       healthcheck:
@@ -62,17 +68,17 @@ services:
         elasticsearch:
           condition: service_healthy      
 
-    api:
-      build: .
-      env_file:
-        - .env
-      ports:
-          - '8000:8000'
-      environment:
-        - PYTHONPATH=/app/
-      depends_on:
-        redis:
-          condition: service_healthy
+    # api:
+    #   build: .
+    #   env_file:
+    #     - .env
+    #   ports:
+    #       - '8000:8000'
+    #   environment:
+    #     - PYTHONPATH=/app/
+    #   depends_on:
+    #     redis:
+    #       condition: service_healthy
 
 volumes:
     pg_volume:
