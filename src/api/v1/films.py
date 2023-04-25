@@ -4,16 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from services.film import FilmService, get_film_service
-from src.models.genre import Genre
-from src.models.person import Person
+from src.models.film import Genre, Person
 from uuid import UUID
 
 
 router = APIRouter()
 
 
-class Film(BaseModel):
-    uuid: UUID
+class FilmDetail(BaseModel):
+    uuid: UUID = Field(alias='id')
     title: str
     description: str
     imdb_rating: float
@@ -25,24 +24,14 @@ class Film(BaseModel):
         
 @router.get("/{film_id}",
             response_model_by_alias=False,
-            response_model=Film)
+            response_model=FilmDetail)
 async def film_details(
     film_id: str, film_service: FilmService = Depends(get_film_service)
-) -> Film:
+) -> FilmDetail:
     film = await film_service.get_by_id(film_id)
     if not film:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail="film not found"
         )
-    
-    return Film(
-                uuid=film.id,
-                title=film.title,
-                description=film.description,
-                imdb_rating=film.imdb_rating,
-                genres=film.genre,
-                directors=film.directors,
-                actors=film.actors,
-                writers=film.writers,
-                )
+    return FilmDetail(**film.dict(by_alias=True))

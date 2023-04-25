@@ -10,9 +10,3 @@ class GenreES(MovieMixin):
 
 class ListViewGenresES(BaseModel):
     items: list[GenreES]
-
-
-class Genre(MovieMixin):
-    name: str | None = None
-    
-    

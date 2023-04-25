@@ -1,8 +1,14 @@
-from src.models.genre import Genre
 from src.models.mixins import MovieMixin
-from src.models.person import Person
 
 
+class Genre(MovieMixin):
+    name: str | None = None
+    
+    
+class Person(MovieMixin):
+    name: str
+    
+    
 class Film(MovieMixin):
     title: str
     description: str
