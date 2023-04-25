@@ -12,25 +12,29 @@ router = APIRouter()
 
 
 class OrderingFilms(str, Enum):
-    popular = "-imdb_rating"
-    not_popular = "imdb_rating"
+    popular = "imdb_rating"
+    not_popular = "-imdb_rating"
 
 
 class UUIDMixin(BaseModel):
-    uuid: UUID = Field(alias='id')
+    uuid: UUID = Field(alias='id', title="UUID фильма",
+                       example="9b3c278c-665f-4055-a824-891f19cb4993")
 
 
 class FilmShort(UUIDMixin, BaseModel):
-    title: str
-    imdb_rating: float
+    title: str = Field(title="Название фильма",
+                       example="Star Trek Continues")
+    imdb_rating: float = Field(title="Рейтинг фильма",
+                               example=8.0)
 
 
 class FilmDetail(FilmShort):
-    description: str
-    genres: list[Genre] | None = None
-    directors: list[Person]
-    actors: list[Person]
-    writers: list[Person]
+    description: str = Field(..., title="Описание фильма",
+                       example="Kirk and Spock team up against the Gorn.")
+    genres: list[Genre] | None = Field(default=None, title="Жанры фильма")
+    directors: list[Person] = Field(title="Режисер")
+    actors: list[Person] = Field(title="Актеры")
+    writers: list[Person] = Field(title="Сценаристы")
    
 
 @router.get('/',
@@ -38,7 +42,7 @@ class FilmDetail(FilmShort):
             response_model_by_alias=False,
             summary="Главная страница")
 async def film_list(
-    sort: OrderingFilms,
+    sort: OrderingFilms = OrderingFilms.popular,
     page_size: int = 10,
     page_number: int = 1,
     genre: UUID | None = None,
@@ -73,7 +77,8 @@ async def film_search(
         
 @router.get("/{film_id}",
             response_model_by_alias=False,
-            response_model=FilmDetail)
+            response_model=FilmDetail,
+            summary="Страница фильма")
 async def film_details(
     film_id: UUID,
     film_service: FilmService = Depends(get_film_service)
