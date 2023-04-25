@@ -8,7 +8,7 @@ from elasticsearch import AsyncElasticsearch
 
 from src.db.elastic import get_elastic
 from src.db.redis_db import get_redis
-from src.models.film import Film
+from src.models.film import Film, FilmShort
 from src.services.mixin import MixinModel
 
 
@@ -28,7 +28,36 @@ class FilmService(MixinModel):
         return film
         
         
-
+    async def home_page(self, size: int, page: int, sort: str, genre: str
+                        ) -> Optional[list]:
+        cache_id = f"{self.home_page.__name__}{self.index}{size}{page}{sort}"
+        films = await self._get_from_cache(cache_id)
+        if films:
+            films = orjson.loads(films)
+        if not films:
+            body = {
+                "size": size,
+                "from": size * (page - 1),
+                "query": {
+                    "bool": {
+                        "filter": []
+                    }
+                },
+                "sort": [{
+                    "imdb_rating": {
+                        "order": "desc" if sort == 'imdb_rating' else "asc"
+                    }
+                }],
+                "_source" : ["id", "title", "imdb_rating"]
+            }
+            if genre:
+                body["query"]["bool"]["filter"].append({"term": {"genres.id": genre}})
+            docs = await self._search_from_elastic(self.index, body)
+            films = [FilmShort(**i['_source']) for i in docs]
+            if not films:
+                return []
+            await self._put_to_cache(cache_id, orjson.dumps([film.dict() for film in films]))
+        return films
 
 
 @lru_cache()
