@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from src.local.api.v1 import anotation
+from src.local.api.v1 import films as errors
 from src.models.film import Genre, Person
 from src.services.film import FilmService, get_film_service
 
@@ -32,41 +33,40 @@ class FilmShort(UUIDMixin, BaseModel):
 
 class FilmDetail(FilmShort):
     description: str = Field(..., title="Описание фильма",
-                       example="Kirk and Spock team up against the Gorn.")
+                             example="Kirk and Spock team up against the Gorn")
     genres: list[Genre] | None = Field(default=None, title="Жанры фильма")
     directors: list[Person] = Field(title="Режисер")
     actors: list[Person] = Field(title="Актеры")
     writers: list[Person] = Field(title="Сценаристы")
-   
+
 
 @router.get('/',
             response_model=list[FilmShort],
             response_model_by_alias=False,
             summary="Главная страница")
 async def film_list(
-    sort: OrderingFilms = OrderingFilms.popular,
-    page_size: Annotated[
+        sort: OrderingFilms = OrderingFilms.popular,
+        page_size: Annotated[
             int, Query(description=anotation.PAGINATION_SIZE, ge=1)
         ] = 10,
-    page_number: Annotated[
+        page_number: Annotated[
             int, Query(description=anotation.PAGINATION_PAGE, ge=1)
         ] = 1,
-    genre: Annotated[UUID, Path(
+        genre: Annotated[UUID, Path(
             description=anotation.GENRE_ID
         )] = None,
-    film_service: FilmService = Depends(get_film_service),
+        film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.home_page(
-        size=page_size, 
-        page=page_number, 
+        size=page_size,
+        page=page_number,
         sort=sort,
-        genre=genre)
+        genre=str(genre))
     if not films:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail=anotation.FILMS_NOT_FOUND)
+            detail=errors.FILM_ALL)
     return films
-
 
 
 @router.get('/search',
@@ -74,44 +74,43 @@ async def film_list(
             response_model_by_alias=False,
             summary="Поиск по фильмам")
 async def film_search(
-    query: Annotated[
+        query: Annotated[
             str, Query(description=anotation.FILMS_QUERY,
                        example="Star", min_length=1)
         ],
-    page_size: Annotated[
+        page_size: Annotated[
             int, Query(description=anotation.PAGINATION_SIZE, ge=1)
         ] = 10,
-    page_number: Annotated[
+        page_number: Annotated[
             int, Query(description=anotation.PAGINATION_PAGE, ge=1)
         ] = 1,
-    film_service: FilmService = Depends(get_film_service),
+        film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.search_films(
         query=query,
-        size=page_size, 
+        size=page_size,
         page=page_number)
     if not films:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail=anotation.FILMS_NOT_FOUND)
+            detail=errors.FILM_SEARCH)
     return films
-    
-    
-        
+
+
 @router.get("/{film_id}",
             response_model_by_alias=False,
             response_model=FilmDetail,
             summary="Страница фильма")
 async def film_details(
-    film_id: Annotated[UUID, Path(
+        film_id: Annotated[UUID, Path(
             description=anotation.FILM_ID,
-            example="9758b894-57d7-465d-b657-c5803dd5b7f7"
+            example="77bff1a8-f6e2-4a6c-b555-b5d44c34c0dd"
         )],
-    film_service: FilmService = Depends(get_film_service)
+        film_service: FilmService = Depends(get_film_service)
 ) -> FilmDetail:
     film = await film_service.get_by_id(str(film_id))
     if not film:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail=anotation.FILM_NOT_FOUND)
+            detail=errors.FILM_DETAILS)
     return FilmDetail(**film.dict(by_alias=True))
