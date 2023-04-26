@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from services.film import FilmService, get_film_service
+from src.services.film import FilmService, get_film_service
 from src.models.film import Genre, Person
 
 router = APIRouter()
