@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from src.local.api.v1 import anotation
 from src.services.person import PersonService, get_person_service
+from src.local.api.v1 import persons as errors
 
 router = APIRouter()
 
@@ -69,7 +70,7 @@ async def person_details(
     if not person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail="person not found"
+            detail=errors.PERSON_DETAILS
         )
     return PersonDetail(**person.dict())
 
@@ -109,7 +110,7 @@ async def person_details_film(
     if not films_person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail="person not found"
+            detail=errors.PERSON_DETAILS
         )
     return [FilmDetail(**i.dict()) for i in films_person.films]
 
@@ -145,6 +146,6 @@ async def person_search(
     if not search_person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail="person not found"
+            detail=errors.PERSON_SEARCH
         )
     return [PersonDetail(**i.dict()) for i in search_person.items]

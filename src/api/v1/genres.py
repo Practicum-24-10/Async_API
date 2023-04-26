@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from src.local.api.v1 import anotation
 from src.services.genre import GenreService, get_genre_service
+from src.local.api.v1 import genres as errors
 
 router = APIRouter()
 
@@ -45,7 +46,7 @@ async def genre_details(
     if not genre:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail="genre not found"
+            detail=errors.GENRE_DETAILS
         )
     return Genre(id=genre.id, name=genre.name, description=genre.description)
 
@@ -78,6 +79,6 @@ async def genre_all(
     if not genres:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail="genres not found"
+            detail=errors.GENRE_ALL
         )
     return [Genre(**i.dict()) for i in genres.items]
