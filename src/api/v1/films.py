@@ -1,12 +1,14 @@
 from enum import Enum
 from http import HTTPStatus
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
-from src.services.film import FilmService, get_film_service
+from src.local.api.v1 import anotation
 from src.models.film import Genre, Person
+from src.services.film import FilmService, get_film_service
 
 router = APIRouter()
 
@@ -43,9 +45,15 @@ class FilmDetail(FilmShort):
             summary="Главная страница")
 async def film_list(
     sort: OrderingFilms = OrderingFilms.popular,
-    page_size: int = 10,
-    page_number: int = 1,
-    genre: UUID | None = None,
+    page_size: Annotated[
+            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
+        ] = 10,
+    page_number: Annotated[
+            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
+        ] = 1,
+    genre: Annotated[UUID, Path(
+            description=anotation.GENRE_ID
+        )] = None,
     film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.home_page(
@@ -53,6 +61,10 @@ async def film_list(
         page=page_number, 
         sort=sort,
         genre=genre)
+    if not films:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=anotation.FILMS_NOT_FOUND)
     return films
 
 
@@ -62,15 +74,26 @@ async def film_list(
             response_model_by_alias=False,
             summary="Поиск по фильмам")
 async def film_search(
-    query: str,
-    page_size: int = 10,
-    page_number: int = 1,
+    query: Annotated[
+            str, Query(description=anotation.FILMS_QUERY,
+                       example="Star", min_length=1)
+        ],
+    page_size: Annotated[
+            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
+        ] = 10,
+    page_number: Annotated[
+            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
+        ] = 1,
     film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.search_films(
         query=query,
         size=page_size, 
         page=page_number)
+    if not films:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=anotation.FILMS_NOT_FOUND)
     return films
     
     
@@ -80,12 +103,15 @@ async def film_search(
             response_model=FilmDetail,
             summary="Страница фильма")
 async def film_details(
-    film_id: UUID,
+    film_id: Annotated[UUID, Path(
+            description=anotation.FILM_ID,
+            example="9758b894-57d7-465d-b657-c5803dd5b7f7"
+        )],
     film_service: FilmService = Depends(get_film_service)
 ) -> FilmDetail:
     film = await film_service.get_by_id(str(film_id))
     if not film:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail="film not found")
+            detail=anotation.FILM_NOT_FOUND)
     return FilmDetail(**film.dict(by_alias=True))
