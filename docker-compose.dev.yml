@@ -57,7 +57,7 @@ services:
           condition: service_healthy
 
     etl:
-      image: ghcr.io/tyshbyr/etl:0.0.3
+      image: ghcr.io/tyshbyr/etl:0.0.4
       env_file:
         - .env
       volumes:
@@ -67,18 +67,6 @@ services:
       depends_on:
         elasticsearch:
           condition: service_healthy      
-
-    # api:
-    #   build: .
-    #   env_file:
-    #     - .env
-    #   ports:
-    #       - '8000:8000'
-    #   environment:
-    #     - PYTHONPATH=/app/
-    #   depends_on:
-    #     redis:
-    #       condition: service_healthy
 
 volumes:
     pg_volume:

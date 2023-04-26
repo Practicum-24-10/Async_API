@@ -5,6 +5,8 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
+ENV PYTHONPATH=/app/
+
 COPY requirements.txt requirements.txt
 
 RUN  pip install --upgrade pip \
@@ -12,6 +14,4 @@ RUN  pip install --upgrade pip \
 
 COPY . .
 
-EXPOSE 8000
-
-CMD python src/main.py
+CMD gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000

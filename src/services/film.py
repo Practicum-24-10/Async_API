@@ -31,7 +31,8 @@ class FilmService(MixinModel):
     async def home_page(self, size: int, page: int, sort: str, genre: str
                         ) -> Optional[list]:
         if genre:
-            cache_id = f"{self.home_page.__name__}{self.index}{size}{page}{sort}{genre}"
+            cache_id = f"""
+            {self.home_page.__name__}{self.index}{size}{page}{sort}{genre}"""
         cache_id = f"{self.home_page.__name__}{self.index}{size}{page}{sort}"
         films = await self._get_from_cache(cache_id)
         if films:
