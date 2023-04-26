@@ -1,9 +1,11 @@
 from http import HTTPStatus
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
+from src.local.api.v1 import anotation
 from src.services.person import PersonService, get_person_service
 
 router = APIRouter()
@@ -42,10 +44,17 @@ class PersonDetail(BaseModel):
                 "по uuid и фильмы с его/ее участием",
 )
 async def person_details(
-        person_id: UUID,
+        person_id: Annotated[UUID, Path(
+            description=anotation.PERSON_ID,
+            example="9758b894-57d7-465d-b657-c5803dd5b7f7"
+        )],
         person_service: PersonService = Depends(get_person_service),
-        page: int = 1,
-        size: int = 10,
+        page: Annotated[
+            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
+        ] = 1,
+        size: Annotated[
+            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
+        ] = 10,
 ) -> PersonDetail:
     """
     Метод API
@@ -74,10 +83,17 @@ async def person_details(
                 "фильмов по uuid персоны с его/ее участием",
 )
 async def person_details_film(
-        person_id: UUID,
+        person_id: Annotated[UUID, Path(
+            description=anotation.PERSON_ID,
+            example="9758b894-57d7-465d-b657-c5803dd5b7f7"
+        )],
         person_service: PersonService = Depends(get_person_service),
-        page: int = 1,
-        size: int = 10,
+        page: Annotated[
+            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
+        ] = 1,
+        size: Annotated[
+            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
+        ] = 10,
 ) -> list[FilmDetail]:
     """
     Метод API
@@ -104,10 +120,17 @@ async def person_details_film(
             description="Метод выдает данные поиска по имени персоны "
                         "из query запроса")
 async def person_search(
-        query: str,
+        query: Annotated[
+            str, Query(description=anotation.PERSON_QUERY,
+                       example="William Shatner", min_length=1)
+        ],
         person_service: PersonService = Depends(get_person_service),
-        page: int = 1,
-        size: int = 10,
+        page: Annotated[
+            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
+        ] = 1,
+        size: Annotated[
+            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
+        ] = 10,
 ) -> list[PersonDetail]:
     """
     Метод API
