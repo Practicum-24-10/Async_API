@@ -6,12 +6,13 @@ from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
 from src.api.v1 import films, genres, persons
-from src.core import config
 from src.core.logger import LOGGING
+from src.core.config import AppSettings
 from src.db import elastic, redis_db
 
+config = AppSettings()
 app = FastAPI(
-    title=config.PROJECT_NAME,
+    title=config.project_name,
     docs_url="/api/openapi",
     openapi_url="/api/openapi.json",
     default_response_class=ORJSONResponse,
@@ -19,9 +20,9 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup():
-    redis_db.redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT)
+    redis_db.redis = Redis(host=config.redis_host, port=config.redis_port)
     elastic.es = AsyncElasticsearch(
-        hosts=[f"{config.ELASTIC_HOST}:{config.ELASTIC_PORT}"]
+        hosts=[f"{config.elastic_host}:{config.elastic_port}"]
     )
 
 @app.on_event("shutdown")

@@ -1,0 +1,5 @@
+PAGINATION_SIZE = "Размер выдачи"
+PAGINATION_PAGE = "Страница выдачи"
+GENRE_ID = "UUID Жанра"
+PERSON_ID = "UUID Персоны"
+PERSON_QUERY = "Запрос на поиск"

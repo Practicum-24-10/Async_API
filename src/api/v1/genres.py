@@ -1,10 +1,11 @@
 from http import HTTPStatus
+from typing import Annotated
 from uuid import UUID
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
+from src.local.api.v1 import anotation
 from src.services.genre import GenreService, get_genre_service
 
 router = APIRouter()
@@ -27,7 +28,10 @@ class Genre(BaseModel):
     description="Метод выдает все данные жанра по его uuid",
 )
 async def genre_details(
-        genre_id: UUID,
+        genre_id: Annotated[UUID, Path(
+            description=anotation.GENRE_ID,
+            example="f39d7b6d-aef2-40b1-aaf0-cf05e7048011"
+        )],
         genre_service: GenreService = Depends(get_genre_service)
 ) -> Genre:
     """
@@ -55,8 +59,12 @@ async def genre_details(
 )
 async def genre_all(
         genre_service: GenreService = Depends(get_genre_service),
-        page: int = 1,
-        size: int = 10,
+        page: Annotated[
+            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
+        ] = 1,
+        size: Annotated[
+            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
+        ] = 10,
 ) -> list[Genre]:
     """
     Метод API
