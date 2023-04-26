@@ -2,9 +2,9 @@ from functools import lru_cache
 from typing import Any
 
 import orjson
+from aioredis import Redis
 from elasticsearch import AsyncElasticsearch
 from fastapi import Depends
-from aioredis import Redis
 
 from src.db.elastic import get_elastic
 from src.db.redis_db import get_redis

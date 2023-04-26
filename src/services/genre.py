@@ -1,16 +1,14 @@
 from functools import lru_cache
 
 import orjson
+from aioredis import Redis
 from elasticsearch import AsyncElasticsearch
 from fastapi import Depends
-from aioredis import Redis
 
 from src.db.elastic import get_elastic
 from src.db.redis_db import get_redis
 from src.models.genre import GenreES, ListViewGenresES
 from src.services.mixin import MixinModel
-
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
 
 class GenreService(MixinModel):
