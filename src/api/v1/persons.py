@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from src.local.api.v1 import anotation
-from src.services.person import PersonService, get_person_service
 from src.local.api.v1 import persons as errors
+from src.services.person import PersonService, get_person_service
 
 router = APIRouter()
 

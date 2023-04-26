@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from src.local.api.v1 import anotation
-from src.services.genre import GenreService, get_genre_service
 from src.local.api.v1 import genres as errors
+from src.services.genre import GenreService, get_genre_service
 
 router = APIRouter()
 
