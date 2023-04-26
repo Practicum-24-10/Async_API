@@ -22,12 +22,11 @@ class FilmService(MixinModel):
             if not doc:
                 return None
             film = Film(**doc)
-            await self. _put_to_cache(
+            await self._put_to_cache(
                 f"{self.get_by_id.__name__}{self.index}{film_id}",
                 orjson.dumps(film.dict()))
         return film
-        
-        
+
     async def home_page(self, size: int, page: int, sort: str, genre: str
                         ) -> Optional[list]:
         if genre:
@@ -51,7 +50,7 @@ class FilmService(MixinModel):
                         "order": "desc" if sort == 'imdb_rating' else "asc"
                     }
                 }],
-                "_source" : ["id", "title", "imdb_rating"]
+                "_source": ["id", "title", "imdb_rating"]
             }
             if genre:
                 body["query"]["bool"]["filter"].append(
@@ -63,10 +62,9 @@ class FilmService(MixinModel):
             await self._put_to_cache(cache_id, orjson.dumps(
                 [film.dict() for film in films]))
         return films
-    
-    
+
     async def search_films(self, size: int, page: int, query: str
-                        ) -> Optional[list]:
+                           ) -> Optional[list]:
         cache_id = f"""
                 {self.search_films.__name__}{self.index}{size}{page}{query}"""
         films = await self._get_from_cache(cache_id)
@@ -74,14 +72,14 @@ class FilmService(MixinModel):
             films = orjson.loads(films)
         if not films:
             body = {
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {"match": {"title": query}},
-                            ]
-                        }
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"match": {"title": query}},
+                        ]
                     }
                 }
+            }
             docs = await self._search_from_elastic(self.index, body)
             films = [FilmShort(**i['_source']) for i in docs]
             if not films:
@@ -93,7 +91,7 @@ class FilmService(MixinModel):
 
 @lru_cache()
 def get_film_service(
-    redis: Redis = Depends(get_redis),
-    elastic: AsyncElasticsearch = Depends(get_elastic),
+        redis: Redis = Depends(get_redis),
+        elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmService:
     return FilmService(redis, elastic)
