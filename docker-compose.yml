@@ -64,6 +64,7 @@ services:
 
     api:
       build: .
+      image: fastapi-image
       env_file:
         - .env
       healthcheck:
