@@ -14,7 +14,7 @@ services:
     redis:
       image: redis:7.0.11-alpine
       volumes:
-        - redis_volume:/data
+        - redis_volume_test:/data
 
     api:
       build: ../../.
@@ -27,6 +27,8 @@ services:
     tests:
       image: fastapi-image
       working_dir: /app/tests/functional
+      env_file:
+        - .env
       entrypoint: >
         sh -c "pip install -r requirements.txt
         && python3 utils/wait_for_es.py
