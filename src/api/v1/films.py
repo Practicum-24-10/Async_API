@@ -52,9 +52,8 @@ async def film_list(
         page_number: Annotated[
             int, Query(description=anotation.PAGINATION_PAGE, ge=1)
         ] = 1,
-        genre: Annotated[UUID, Path(
-            description=anotation.GENRE_ID
-        )] = None,
+        genre: Annotated[
+            UUID | None, Query(description=anotation.GENRE_ID)] = None,
         film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.home_page(
