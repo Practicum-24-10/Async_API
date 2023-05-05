@@ -6,7 +6,7 @@ from tests.functional.utils.settings_wait_for import EsSettings
 
 
 if __name__ == '__main__':
-    config = EsSettings()
+    config = EsSettings()  # type: ignore
     es_client = Elasticsearch(
         hosts=[f"{config.elastic_host}:{config.elastic_port}"]
     )

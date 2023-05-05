@@ -81,6 +81,8 @@ class FilmService(MixinModel):
             films = orjson.loads(films)
         if not films:
             body = {
+                "size": size,
+                "from": size * (page - 1),
                 "query": {
                     "bool": {
                         "must": [
