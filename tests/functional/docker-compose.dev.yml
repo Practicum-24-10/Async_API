@@ -4,15 +4,17 @@ services:
     elasticsearch:
       image: ghcr.io/yp-middle-python-24/elasticsearch:8.7.0
       environment:
-        - discovery.type=${DISCOVERY_TYPE}
-        - xpack.security.enabled=${XPACK_SEC_ENABLE}
-      env_file:
-        - .env
+        - discovery.type=single-node
+        - xpack.security.enabled=false
+      ports:
+        - '9200:9200'
       volumes:
         - elastic_volume_test:/usr/share/elasticsearch/data
 
     redis:
       image: redis:7.0.11-alpine
+      ports:
+        - '6379:6379'
       volumes:
         - redis_volume_test:/data
 
@@ -21,25 +23,12 @@ services:
       image: fastapi-image
       env_file:
         - ../../.env
+      ports:
+        - '8000:8000'
       depends_on:
         - elasticsearch
         - redis
-
-    tests:
-      image: fastapi-image
-      working_dir: /app/tests/functional
-      env_file:
-        - .env
-      entrypoint: >
-        sh -c "pip install -r requirements.txt
-        && python3 utils/wait_for_es.py
-        && python3 utils/wait_for_redis.py
-        && pytest src"
-      depends_on:
-        - elasticsearch
-        - redis
-        - api
-
+        
 volumes:
     elastic_volume_test:
       name: elastic_volume_test
