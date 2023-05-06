@@ -23,14 +23,16 @@ app = FastAPI(
 async def startup():
     redis_db.redis = Redis(host=config.redis_host, port=config.redis_port)
     elastic.es = AsyncElasticsearch(
-        hosts=[f"{config.elastic_host}:{config.elastic_port}"]
+        hosts=[f"{config.es_host}:{config.es_port}"]
     )
 
 
 @app.on_event("shutdown")
 async def shutdown():
-    await redis_db.redis.close()
-    await elastic.es.close()
+    if redis_db.redis:
+        await redis_db.redis.close()
+    if elastic.es:
+        await elastic.es.close()
 
 
 app.include_router(films.router, prefix="/api/v1/films", tags=["films"])

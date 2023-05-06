@@ -4,9 +4,10 @@ import json
 from typing import Any, Generator, List
 
 import pytest
-from elasticsearch import AsyncElasticsearch
+from elasticsearch import AsyncElasticsearch, BadRequestError
 
 from tests.functional.settings import test_settings
+from tests.functional.testdata.es_mapping import mapping
 
 
 def get_es_bulk_query(data: List[dict], es_index: str,
@@ -37,9 +38,37 @@ async def es_client():
     await client.close()
 
 
+async def create_index(es_client):
+    try:
+        await es_client.indices.create(
+            settings=mapping["settings"],
+            mappings=mapping["mappings_movies"],
+            index="movies",
+        )
+    except BadRequestError:
+        pass
+    try:
+        await es_client.indices.create(
+            settings=mapping["settings"],
+            mappings=mapping["mappings_persons"],
+            index="persons",
+        )
+    except BadRequestError:
+        pass
+    try:
+        await es_client.indices.create(
+            settings=mapping["settings"],
+            mappings=mapping["mappings_genres"],
+            index="genres",
+        )
+    except BadRequestError:
+        pass
+
+
 @pytest.fixture
 def es_write_data(es_client):
     async def inner(data: List[dict]):
+        await create_index(es_client)
         bulk_query = get_es_bulk_query(
             data,
             test_settings.es_index,
@@ -53,8 +82,9 @@ def es_write_data(es_client):
 @pytest.fixture
 async def make_get_request():
     async with aiohttp.ClientSession() as session:
-        async def _make_get_request(endpoint, params):
+        async def _make_get_request(endpoint: str, params: dict | None = None):
             url = test_settings.service_url + endpoint
+            params = params if params else {}
             async with session.get(url, params=params) as response:
                 body = await response.json()
                 status = response.status
