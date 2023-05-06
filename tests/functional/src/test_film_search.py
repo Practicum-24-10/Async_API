@@ -1,7 +1,5 @@
-import aiohttp
 import pytest
 
-from tests.functional.settings import test_settings
 from tests.functional.testdata.es_data import es_data
 
 
@@ -19,13 +17,9 @@ from tests.functional.testdata.es_data import es_data
     ]
 )
 @pytest.mark.asyncio
-async def test_search(es_write_data, query_data, expected_answer):
+async def test_search(make_get_request, es_write_data, query_data,
+                      expected_answer):
     await es_write_data(es_data)
-    session = aiohttp.ClientSession()
-    url = test_settings.service_url + 'films/search'
-    async with session.get(url, params=query_data) as response:
-        body = await response.json()
-        status = response.status
-    await session.close()
-    assert status == expected_answer['status']
-    assert len(body) == expected_answer['length']
+    response = await make_get_request('films/search', query_data)
+    assert response['status'] == expected_answer['status']
+    assert len(response['body']) == expected_answer['length']
