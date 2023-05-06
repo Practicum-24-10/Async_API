@@ -1,4 +1,5 @@
 import asyncio
+import aiohttp
 import json
 from typing import Any, Generator, List
 
@@ -47,3 +48,15 @@ def es_write_data(es_client):
         if response['errors']:
             raise Exception('Ошибка записи данных в Elasticsearch')
     return inner
+
+
+@pytest.fixture
+async def make_get_request():
+    async with aiohttp.ClientSession() as session:
+        async def _make_get_request(endpoint, params):
+            url = test_settings.service_url + endpoint
+            async with session.get(url, params=params) as response:
+                body = await response.json()
+                status = response.status
+            return {'status': status, 'body': body}
+        yield _make_get_request
