@@ -33,7 +33,7 @@ def fixture_event_loop() -> Generator[asyncio.AbstractEventLoop, Any, None]:
 @pytest.fixture(scope='session')
 async def es_client():
     client = AsyncElasticsearch(
-            hosts=f"{test_settings.es_host}:{test_settings.es_port}")
+        hosts=f"{test_settings.es_host}:{test_settings.es_port}")
     yield client
     await client.close()
 
@@ -76,6 +76,14 @@ def es_write_data(es_client):
         response = await es_client.bulk(operations=bulk_query, refresh=True)
         if response['errors']:
             raise Exception('Ошибка записи данных в Elasticsearch')
+    return inner
+
+
+@pytest.fixture
+def es_delete_data(es_client):
+    async def inner():
+        if await es_client.indices.exists(index=test_settings.es_index):
+            await es_client.indices.delete(index=test_settings.es_index)
     return inner
 
 

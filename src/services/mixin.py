@@ -16,7 +16,7 @@ class MixinModel:
     def _get_cache_id(self, method: str, data: str | dict):
         return orjson.dumps({self.index: {method: data}})
 
-    async def _get_from_cache(self, _id: str) -> bytes | None:
+    async def _get_from_cache(self, _id: bytes) -> bytes | None:
         """
         Получения данных по id
         :param _id:
