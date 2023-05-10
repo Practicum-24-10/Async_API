@@ -5,7 +5,7 @@ from testdata.es_mapping import mapping
 class TestSettings(BaseSettings):
     es_host: str = 'http://localhost'
     es_port: str = '9200'
-    es_index: str = 'movies'
+    es_indexes: list[str] = ['movies']
     es_id_field: str = 'id'
     es_index_mapping: dict = mapping
 
