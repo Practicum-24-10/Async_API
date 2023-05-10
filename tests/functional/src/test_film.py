@@ -9,8 +9,8 @@ film_id = film[0]['id']
     'query_data, expected_answer',
     [
         (
-                {'id': film_id},
-                {'status': 200, 'id': film_id}
+            {'id': film_id},
+            {'status': 200, 'id': film_id}
         ),
     ]
 )
