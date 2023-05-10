@@ -5,19 +5,18 @@ import pytest
     'query_data, expected_answer',
     [
         (
-                {'query': 'The Star', 'size': '60', 'page': '1'},
-                {'status': 200, 'length': 60}
+            {'query': 'The Star', 'size': '60', 'page': '1'},
+            {'status': 200, 'length': 60}
         ),
         (
-                {'query': 'Mashed potato', 'size': '60', 'page': '1'},
-                {'status': 404, 'length': 1}
+            {'query': 'Mashed potato', 'size': '60', 'page': '1'},
+            {'status': 404, 'length': 1}
         )
     ]
 )
 @pytest.mark.asyncio
-async def test_search(es_delete_data, make_get_request, es_write_data,
-                      query_data,
-                      expected_answer):
+async def test_film_search(es_delete_data, make_get_request, es_write_data,
+                           query_data, expected_answer):
     await es_write_data()
     response = await make_get_request('films/search', query_data)
     assert response['status'] == expected_answer['status']
