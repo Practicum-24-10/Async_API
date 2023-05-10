@@ -8,6 +8,7 @@ from elasticsearch import AsyncElasticsearch, BadRequestError
 
 from tests.functional.settings import test_settings
 from tests.functional.testdata.es_mapping import mapping
+from tests.functional.testdata.es_data import test_data
 
 
 def get_es_bulk_query(data: List[dict], es_index: str,
@@ -67,23 +68,27 @@ async def create_index(es_client):
 
 @pytest.fixture
 def es_write_data(es_client):
-    async def inner(data: List[dict]):
+    async def inner():
         await create_index(es_client)
-        bulk_query = get_es_bulk_query(
-            data,
-            test_settings.es_index,
-            test_settings.es_id_field)
-        response = await es_client.bulk(operations=bulk_query, refresh=True)
-        if response['errors']:
-            raise Exception('Ошибка записи данных в Elasticsearch')
+        for index in test_settings.es_indexes:
+            bulk_query = get_es_bulk_query(
+                test_data[index],
+                index,
+                test_settings.es_id_field)
+            response = await es_client.bulk(operations=bulk_query,
+                                            refresh=True)
+            if response['errors']:
+                raise Exception('Ошибка записи данных в Elasticsearch')
+
     return inner
 
 
 @pytest.fixture
 def es_delete_data(es_client):
     async def inner():
-        if await es_client.indices.exists(index=test_settings.es_index):
-            await es_client.indices.delete(index=test_settings.es_index)
+        for index in test_settings.es_indexes:
+            if await es_client.indices.exists(index=index):
+                await es_client.indices.delete(index=index)
     return inner
 
 
@@ -97,4 +102,5 @@ async def make_get_request():
                 body = await response.json()
                 status = response.status
             return {'status': status, 'body': body}
+
         yield _make_get_request
