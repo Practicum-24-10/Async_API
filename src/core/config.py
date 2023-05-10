@@ -11,10 +11,10 @@ dotenv.load_dotenv()
 
 
 class AppSettings(BaseSettings):
-    project_name: str = 'Some project name'
-    redis_host: str = 'localhost'
+    project_name: str = "Some project name"
+    redis_host: str = "localhost"
     redis_port: int = 6379
-    es_host: str = 'http://localhost'
+    es_host: str = "http://localhost"
     es_port: int = 9200
 
 

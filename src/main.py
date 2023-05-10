@@ -1,5 +1,5 @@
 import logging
-
+import uvicorn
 from aioredis import Redis
 from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
@@ -22,9 +22,7 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup():
     redis_db.redis = Redis(host=config.redis_host, port=config.redis_port)
-    elastic.es = AsyncElasticsearch(
-        hosts=[f"{config.es_host}:{config.es_port}"]
-    )
+    elastic.es = AsyncElasticsearch(hosts=[f"{config.es_host}:{config.es_port}"])
 
 
 @app.on_event("shutdown")
@@ -42,3 +40,4 @@ app.include_router(persons.router, prefix="/api/v1/persons", tags=["persons"])
 if __name__ == "__main__":
     logging.basicConfig(**LOGGING)
     log = logging.getLogger(__name__)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

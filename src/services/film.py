@@ -9,100 +9,90 @@ from fastapi import Depends
 
 from src.db.elastic import get_elastic
 from src.db.redis_db import get_redis
-from src.models.film import Film, FilmShort
+from src.models.film import Film, FilmShort, ListFilmShort
 from src.services.mixin import MixinModel
 
 
 class FilmService(MixinModel):
-    index = 'movies'
-
     async def get_by_id(self, film_id: str) -> Optional[Film]:
-        film = await self._get_from_cache(film_id)
+        cache_id = self._get_cache_id(self.get_by_id.__name__, film_id)
+        film = await self._get_from_cache(cache_id)
         if film:
-            film = orjson.loads(film)
+            film = Film(**orjson.loads(film))
         if not film:
             doc = await self._get_by_id_from_elastic(self.index, film_id)
             if not doc:
                 return None
             film = Film(**doc)
-            await self._put_to_cache(
-                f"{self.get_by_id.__name__}{self.index}{film_id}",
-                orjson.dumps(film.dict()))
+            await self._put_to_cache(cache_id, orjson.dumps(film.dict()))
         return film
 
-    async def home_page(self, size: int, page: int, sort: str,
-                        genre: UUID | None
-                        ) -> Optional[list]:
-        cache_id = f"{self.home_page.__name__}{self.index}{size}{page}{sort}"
+    async def home_page(
+        self, size: int, page: int, sort: str, genre: UUID | None
+    ) -> ListFilmShort | None:
+        body = {
+            "size": size,
+            "from": size * (page - 1),
+            "query": {"nested": {
+                "path": "genres", "query": {"bool": {"filter": []}}}
+            },
+            "sort": [
+                {"imdb_rating": {
+                    "order": "desc" if sort == "imdb_rating" else "asc"
+                }}
+            ],
+            "_source": ["id", "title", "imdb_rating"],
+        }
         if genre:
-            cache_id = f"""
-            {self.home_page.__name__}{self.index}{size}{page}{sort}{genre}"""
+            body["query"]["nested"]["query"]["bool"]["filter"].append(
+                {"term": {"genres.id": genre}}
+            )
+        cache_id = self._get_cache_id(self.home_page.__name__, body)
         films = await self._get_from_cache(cache_id)
         if films:
-            films = orjson.loads(films)
+            films = ListFilmShort(**orjson.loads(films))
         if not films:
-            body = {
-                "size": size,
-                "from": size * (page - 1),
-                "query": {
-                    "nested": {
-                        "path": "genres",
-                        "query": {
-                            "bool": {
-                                "filter": []
-                            }
-                        }
-                    }
-                },
-                "sort": [{
-                    "imdb_rating": {
-                        "order": "desc" if sort == 'imdb_rating' else "asc"
-                    }
-                }],
-                "_source": ["id", "title", "imdb_rating"]
-            }
-            if genre:
-                body["query"]["nested"]["query"]["bool"]["filter"].append(
-                    {"term": {"genres.id": genre}})
             docs = await self._search_from_elastic(self.index, body)
             if not docs:
-                return []
-            films = [FilmShort(**i['_source']) for i in docs]
-            await self._put_to_cache(cache_id, orjson.dumps(
-                [film.dict() for film in films]))
+                return None
+            films = ListFilmShort(
+                films=[FilmShort(**i["_source"]) for i in docs]
+            )
+            await self._put_to_cache(cache_id, orjson.dumps(films.dict()))
         return films
 
-    async def search_films(self, size: int, page: int, query: str
-                           ) -> Optional[list]:
-        cache_id = f"""
-                {self.search_films.__name__}{self.index}{size}{page}{query}"""
+    async def search_films(
+        self, size: int, page: int, query: str
+    ) -> ListFilmShort | None:
+        body = {
+            "size": size,
+            "from": size * (page - 1),
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"title": query}},
+                    ]
+                }
+            },
+        }
+        cache_id = self._get_cache_id(self.search_films.__name__, body)
         films = await self._get_from_cache(cache_id)
         if films:
-            films = orjson.loads(films)
+            films = ListFilmShort(**orjson.loads(films))
         if not films:
-            body = {
-                "size": size,
-                "from": size * (page - 1),
-                "query": {
-                    "bool": {
-                        "must": [
-                            {"match": {"title": query}},
-                        ]
-                    }
-                }
-            }
             docs = await self._search_from_elastic(self.index, body)
             if not docs:
-                return []
-            films = [FilmShort(**i['_source']) for i in docs]
-            await self._put_to_cache(cache_id, orjson.dumps(
-                [film.dict() for film in films]))
+                return None
+            films = ListFilmShort(
+                films=[FilmShort(**i["_source"]) for i in docs]
+            )
+            await self._put_to_cache(cache_id, orjson.dumps(films.dict()))
         return films
 
 
 @lru_cache()
 def get_film_service(
-        redis: Redis = Depends(get_redis),
-        elastic: AsyncElasticsearch = Depends(get_elastic),
+    redis: Redis = Depends(get_redis),
+    elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmService:
-    return FilmService(redis, elastic)
+    return FilmService(redis, elastic, "movies")

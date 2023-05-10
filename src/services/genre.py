@@ -12,10 +12,9 @@ from src.services.mixin import MixinModel
 
 
 class GenreService(MixinModel):
-    index = "genres"
-
     async def get_by_id(self, genre_id: str) -> GenreES | None:
-        genre = await self._get_from_cache(genre_id)
+        cache_id = self._get_cache_id(self.get_by_id.__name__, genre_id)
+        genre = await self._get_from_cache(cache_id)
         if genre is not None:
             genre = GenreES(**orjson.loads(genre))
         if not genre:
@@ -23,28 +22,24 @@ class GenreService(MixinModel):
             if not row_data:
                 return None
             genre = GenreES(**row_data)
-            await self._put_to_cache(str(genre.id), orjson.dumps(genre.dict()))
+            await self._put_to_cache(cache_id, orjson.dumps(genre.dict()))
 
         return genre
 
     async def get_all(self, page, size) -> ListViewGenresES | None:
-        genres = await self._get_from_cache(
-            f"genre{self.get_all.__name__}{page}{size}"
-        )
+        body = {"size": size, "from": (page - 1) * size}
+        cache_id = self._get_cache_id(self.get_all.__name__, body)
+        genres = await self._get_from_cache(cache_id)
         if genres is not None:
             genres = ListViewGenresES(**orjson.loads(genres))
         if not genres:
-            body = {"size": size, "from": (page - 1) * size}
             row_data = await self._search_from_elastic(self.index, body)
             if not row_data:
                 return None
             genres = ListViewGenresES(
                 items=[GenreES(**i["_source"]) for i in row_data]
             )
-            await self._put_to_cache(
-                f"genre{self.get_all.__name__}{page}{size}",
-                orjson.dumps(genres.dict())
-            )
+            await self._put_to_cache(cache_id, orjson.dumps(genres.dict()))
 
         return genres
 
@@ -54,4 +49,4 @@ def get_genre_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> GenreService:
-    return GenreService(redis, elastic)
+    return GenreService(redis, elastic, "genres")

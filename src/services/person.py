@@ -8,14 +8,17 @@ from fastapi import Depends
 
 from src.db.elastic import get_elastic
 from src.db.redis_db import get_redis
-from src.models.person import (FilmPersonES, ListPersonFilm, PersonES,
-                               PersonFilmES, SearchPersons)
+from src.models.person import (
+    FilmPersonES,
+    ListPersonFilm,
+    PersonES,
+    PersonFilmES,
+    SearchPersons,
+)
 from src.services.mixin import MixinModel
 
 
 class PersonService(MixinModel):
-    index = "persons"
-
     async def get_by_id(self, person_id: str, page, size) -> PersonES | None:
         """
         Метод получения данных по uuid
@@ -26,9 +29,13 @@ class PersonService(MixinModel):
         :param size: размер страницы
         :return: данные в моделе PersonES или None
         """
-        person = await self._get_from_cache(
-            f"{self.get_by_id.__name__}{page}{person_id}{size}"
-        )
+        body = {
+            "size": size,
+            "from": (page - 1) * size,
+            "query": self.get_query_in_films(person_id),
+        }
+        cache_id = self._get_cache_id(self.get_by_id.__name__, body)
+        person = await self._get_from_cache(cache_id)
         if person is not None:
             person = PersonES(**orjson.loads(person))
         if not person:
@@ -37,11 +44,6 @@ class PersonService(MixinModel):
             )
             if not person_data:
                 return None
-            body = {
-                "size": size,
-                "from": (page - 1) * size,
-                "query": self.get_query_in_films(person_id),
-            }
             row_in_films = await self._search_from_elastic("movies", body)
             in_films = self._get_in_films(row_in_films, person_id)
             person = PersonES(
@@ -49,16 +51,14 @@ class PersonService(MixinModel):
                 full_name=person_data["full_name"],
                 films=[FilmPersonES(**i) for i in in_films],
             )
-            await self._put_to_cache(
-                f"{self.get_by_id.__name__}{page}{person_id}{size}",
-                orjson.dumps(person.dict()),
-            )
+            await self._put_to_cache(cache_id, orjson.dumps(person.dict()))
 
         return person
 
     @staticmethod
     def _get_in_films(
-            row_in_films: list, person_id: str
+            row_in_films: list,
+            person_id: str
     ) -> list[dict[str, Any]]:
         """
         Метод для получения id фильмов и ролей персоны которая/который
@@ -86,7 +86,7 @@ class PersonService(MixinModel):
         return in_films
 
     async def get_person_films(
-            self, person_id: str, page, size
+        self, person_id: str, page, size
     ) -> ListPersonFilm | None:
         """
         Метод получения подробных данных фильмов с участием персоны по uuid
@@ -97,17 +97,16 @@ class PersonService(MixinModel):
         :param size: размер страницы
         :return: список данных фильмов в моделе ListPersonFilm или None
         """
-        person_films = await self._get_from_cache(
-            f"{self.get_person_films.__name__}{page}{person_id}{size}"
-        )
+        body = {
+            "size": size,
+            "from": (page - 1) * size,
+            "query": self.get_query_in_films(person_id),
+        }
+        cache_id = self._get_cache_id(self.get_person_films.__name__, body)
+        person_films = await self._get_from_cache(cache_id)
         if person_films is not None:
             person_films = ListPersonFilm(**orjson.loads(person_films))
         if not person_films:
-            body = {
-                "size": size,
-                "from": (page - 1) * size,
-                "query": self.get_query_in_films(person_id),
-            }
             row_in_films = await self._search_from_elastic("movies", body)
             if not row_in_films:
                 return None
@@ -123,7 +122,7 @@ class PersonService(MixinModel):
                 films=[PersonFilmES(**i) for i in in_films]
             )
             await self._put_to_cache(
-                f"{self.get_person_films.__name__}{page}{person_id}{size}",
+                cache_id,
                 orjson.dumps(person_films.dict()),
             )
 
@@ -141,17 +140,16 @@ class PersonService(MixinModel):
         :param size: размер страницы
         :return: список данных найденых персон в моделе SearchPersons или None
         """
-        found_persons = await self._get_from_cache(
-            f"{self.search_person.__name__}{page}{query}{size}"
-        )
+        body = {
+            "size": size,
+            "from": (page - 1) * size,
+            "query": self.get_query_search(query),
+        }
+        cache_id = self._get_cache_id(self.search_person.__name__, body)
+        found_persons = await self._get_from_cache(cache_id)
         if found_persons is not None:
             found_persons = SearchPersons(**orjson.loads(found_persons))
         if not found_persons:
-            body = {
-                "size": size,
-                "from": (page - 1) * size,
-                "query": self.get_query_search(query),
-            }
             found_persons = await self._search_from_elastic(self.index, body)
             if not found_persons:
                 return None
@@ -169,8 +167,7 @@ class PersonService(MixinModel):
                 valid_found_persons.append(valid_person)
             found_persons = SearchPersons(items=valid_found_persons)
             await self._put_to_cache(
-                f"{self.search_person.__name__}{page}{query}{size}",
-                orjson.dumps(found_persons.dict()),
+                cache_id, orjson.dumps(found_persons.dict())
             )
 
         return found_persons
@@ -189,7 +186,8 @@ class PersonService(MixinModel):
                         "nested": {
                             "path": "actors",
                             "query": {"bool": {
-                                "must": [{"term": {"actors.id": _id}}]}},
+                                "must": [{"term": {"actors.id": _id}}]}
+                            },
                         }
                     },
                     {
@@ -197,7 +195,8 @@ class PersonService(MixinModel):
                             "path": "writers",
                             "query": {
                                 "bool": {
-                                    "must": [{"term": {"writers.id": _id}}]}
+                                    "must": [{"term": {"writers.id": _id}}]
+                                }
                             },
                         }
                     },
@@ -206,7 +205,8 @@ class PersonService(MixinModel):
                             "path": "directors",
                             "query": {
                                 "bool": {
-                                    "must": [{"term": {"directors.id": _id}}]}
+                                    "must": [{"term": {"directors.id": _id}}]
+                                }
                             },
                         }
                     },
@@ -226,7 +226,7 @@ class PersonService(MixinModel):
 
 @lru_cache()
 def get_person_service(
-        redis: Redis = Depends(get_redis),
-        elastic: AsyncElasticsearch = Depends(get_elastic),
+    redis: Redis = Depends(get_redis),
+    elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> PersonService:
-    return PersonService(redis, elastic)
+    return PersonService(redis, elastic, "persons")

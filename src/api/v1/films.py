@@ -46,26 +46,26 @@ class FilmDetail(FilmShort):
             summary="Главная страница")
 async def film_list(
         sort: OrderingFilms = OrderingFilms.popular,
-        page_size: Annotated[
-            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
-        ] = 10,
-        page_number: Annotated[
+        page: Annotated[
             int, Query(description=anotation.PAGINATION_PAGE, ge=1)
         ] = 1,
+        size: Annotated[
+            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
+        ] = 10,
         genre: Annotated[
             UUID | None, Query(description=anotation.GENRE_ID)] = None,
         film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.home_page(
-        size=page_size,
-        page=page_number,
+        size=size,
+        page=page,
         sort=sort,
         genre=genre)
     if not films:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail=errors.FILM_ALL)
-    return films
+    return [FilmShort(**i.dict()) for i in films.films]
 
 
 @router.get('/search',
@@ -77,23 +77,23 @@ async def film_search(
             str, Query(description=anotation.FILMS_QUERY,
                        example="Star", min_length=1)
         ],
-        page_size: Annotated[
-            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
-        ] = 10,
-        page_number: Annotated[
+        page: Annotated[
             int, Query(description=anotation.PAGINATION_PAGE, ge=1)
         ] = 1,
+        size: Annotated[
+            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
+        ] = 10,
         film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.search_films(
         query=query,
-        size=page_size,
-        page=page_number)
+        size=size,
+        page=page)
     if not films:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail=errors.FILM_SEARCH)
-    return films
+    return [FilmShort(**i.dict()) for i in films.films]
 
 
 @router.get("/{film_id}",
