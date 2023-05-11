@@ -1,9 +1,5 @@
 import uuid
 
-from faker import Faker
-
-
-fake = Faker()
 
 film = [{
     "id": 'cde7b6ff-32de-4807-8cd4-be95682e1ed9',
@@ -114,5 +110,5 @@ persons_data = person + [{
 test_data = {
     'movies': films_data,
     'persons': persons_data,
-    'genre': genres_data,
+    'genres': genres_data,
 }
