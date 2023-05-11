@@ -2,8 +2,9 @@ from functools import lru_cache
 from typing import Any
 
 import orjson
-from aioredis import Redis
-from elasticsearch import AsyncElasticsearch
+
+from src.db.cache import AbstractCache
+from src.db.storage import AbstractStorage
 from fastapi import Depends
 
 from src.db.elastic import get_elastic
@@ -226,7 +227,7 @@ class PersonService(MixinModel):
 
 @lru_cache()
 def get_person_service(
-    redis: Redis = Depends(get_redis),
-    elastic: AsyncElasticsearch = Depends(get_elastic),
+    redis: AbstractCache = Depends(get_redis),
+    elastic: AbstractStorage = Depends(get_elastic),
 ) -> PersonService:
     return PersonService(redis, elastic, "persons")
