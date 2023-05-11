@@ -3,6 +3,7 @@ import pytest
 from tests.functional.testdata.es_data import film
 
 film = film[0]
+id_not_existing_genre = "b04d45e4-e7bd-417e-a700-0049e8cae9e6"
 
 
 @pytest.mark.parametrize(
@@ -22,7 +23,7 @@ film = film[0]
                 'sort': 'imdb_rating',
                 'page': '1',
                 'size': '1',
-                'genre': '9b3c278c-665f-4055-a824-891f19cb4993'
+                'genre': id_not_existing_genre
             },
             {'status': 404, 'size': 1}
         ),
