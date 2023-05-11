@@ -2,20 +2,14 @@ from functools import lru_cache
 from typing import Any
 
 import orjson
-
-from src.db.cache import AbstractCache
-from src.db.storage import AbstractStorage
 from fastapi import Depends
 
+from src.db.cache import AbstractCache
 from src.db.elastic import get_elastic
 from src.db.redis_db import get_redis
-from src.models.person import (
-    FilmPersonES,
-    ListPersonFilm,
-    PersonES,
-    PersonFilmES,
-    SearchPersons,
-)
+from src.db.storage import AbstractStorage
+from src.models.person import (FilmPersonES, ListPersonFilm, PersonES,
+                               PersonFilmES, SearchPersons)
 from src.services.mixin import MixinModel
 
 

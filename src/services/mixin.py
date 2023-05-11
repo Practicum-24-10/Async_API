@@ -3,8 +3,9 @@ from typing import Any
 
 import orjson
 from elasticsearch import NotFoundError
-from src.db.storage import AbstractStorage
+
 from src.db.cache import AbstractCache
+from src.db.storage import AbstractStorage
 
 CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 

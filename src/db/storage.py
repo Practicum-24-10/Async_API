@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from elasticsearch import AsyncElasticsearch
 from typing import Any
+
+from elasticsearch import AsyncElasticsearch
 
 
 class AbstractStorage(ABC):
