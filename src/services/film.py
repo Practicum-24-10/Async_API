@@ -3,8 +3,9 @@ from typing import Optional
 from uuid import UUID
 
 import orjson
-from aioredis import Redis
-from elasticsearch import AsyncElasticsearch
+
+from src.db.cache import AbstractCache
+from src.db.storage import AbstractStorage
 from fastapi import Depends
 
 from src.db.elastic import get_elastic
@@ -92,7 +93,7 @@ class FilmService(MixinModel):
 
 @lru_cache()
 def get_film_service(
-    redis: Redis = Depends(get_redis),
-    elastic: AsyncElasticsearch = Depends(get_elastic),
+    redis: AbstractCache = Depends(get_redis),
+    elastic: AbstractStorage = Depends(get_elastic),
 ) -> FilmService:
     return FilmService(redis, elastic, "movies")

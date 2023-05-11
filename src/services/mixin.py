@@ -1,16 +1,41 @@
+from abc import ABC, abstractmethod
 from typing import Any
 
 import orjson
-from aioredis import Redis
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import NotFoundError
+from src.db.storage import AbstractStorage
+from src.db.cache import AbstractCache
 
 CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
 
-class MixinModel:
-    def __init__(self, redis: Redis, elastic: AsyncElasticsearch, index: str):
-        self.redis = redis
-        self.elastic = elastic
+class AbstractMixin(ABC):
+    @abstractmethod
+    def _get_cache_id(self, method: str, data: str | dict):
+        pass
+
+    @abstractmethod
+    async def _get_from_cache(self, _id: bytes) -> bytes | None:
+        pass
+
+    @abstractmethod
+    async def _put_to_cache(self, _id: bytes, data: bytes):
+        pass
+
+    @abstractmethod
+    async def _search_from_elastic(
+            self,
+            index: str,
+            body: dict[str, Any],
+    ) -> list[dict[str, Any]] | None:
+        pass
+
+
+class MixinModel(AbstractMixin):
+    def __init__(self, cache: AbstractCache, storage: AbstractStorage,
+                 index: str):
+        self.cache = cache
+        self.storage = storage
         self.index = index
 
     def _get_cache_id(self, method: str, data: str | dict):
@@ -22,7 +47,7 @@ class MixinModel:
         :param _id:
         :return: данные в bytes
         """
-        data = await self.redis.get(_id)
+        data = await self.cache.get(_id)
         if not data:
             return None
         return data
@@ -33,10 +58,10 @@ class MixinModel:
         :param _id: id для доступа
         :param data: данные в bytes
         """
-        await self.redis.set(_id, data, CACHE_EXPIRE_IN_SECONDS)
+        await self.cache.set(_id, data, CACHE_EXPIRE_IN_SECONDS)
 
     async def _get_by_id_from_elastic(
-        self, index: str, _id: str
+            self, index: str, _id: str
     ) -> dict[str, Any] | None:
         """
         Получение данных индекса по id из elastic
@@ -45,15 +70,15 @@ class MixinModel:
         :return: данные в виде словаря
         """
         try:
-            doc = await self.elastic.get(index=index, id=_id)
+            doc = await self.storage.get(index=index, id=_id)
         except NotFoundError:
             return None
         return doc["_source"]
 
     async def _search_from_elastic(
-        self,
-        index: str,
-        body: dict[str, Any],
+            self,
+            index: str,
+            body: dict[str, Any],
     ) -> list[dict[str, Any]] | None:
         """
         Получение всех данных индекса из elastic
@@ -62,7 +87,7 @@ class MixinModel:
         :return: лист с данными
         """
         try:
-            doc = await self.elastic.search(index=index, body=body)
+            doc = await self.storage.search(index=index, body=body)
         except NotFoundError:
             return None
         return doc["hits"]["hits"]
