@@ -12,3 +12,9 @@ class RedisSettings(BaseSettings):
 class EsSettings(BaseSettings):
     elastic_host: str = Field(..., env='ES_HOST')
     elastic_port: int = Field(9200, env='ES_PORT')
+
+
+class BackOffConfig(BaseSettings):
+    start_sleep_time: float = Field(..., env="BO_START_SLEEP_TIME")
+    factor: int = Field(..., env="BO_FACTOR")
+    border_sleep_time: int = Field(..., env="BO_BORDER_SLEEP_TIME")

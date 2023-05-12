@@ -3,14 +3,11 @@ import time
 from elasticsearch import Elasticsearch
 
 from tests.functional.utils.settings_wait_for import EsSettings
-
+from tests.functional.utils.backoff import check_connection
 
 if __name__ == '__main__':
     config = EsSettings()  # type: ignore
     es_client = Elasticsearch(
         hosts=[f"{config.elastic_host}:{config.elastic_port}"]
     )
-    while True:
-        if es_client.ping():
-            break
-        time.sleep(1)
+    check_connection(es_client)
