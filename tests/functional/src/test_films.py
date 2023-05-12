@@ -1,5 +1,6 @@
-import pytest
+from http import HTTPStatus
 
+import pytest
 from tests.functional.testdata.es_data import film
 
 film = film[0]
@@ -16,7 +17,7 @@ id_not_existing_genre = "b04d45e4-e7bd-417e-a700-0049e8cae9e6"
                 'size': '1',
                 'genre': film['genres'][1]['id']
             },
-            {'status': 200, 'size': 1}
+            {'status': HTTPStatus.OK, 'size': 1}
         ),
         (
             {
@@ -25,27 +26,27 @@ id_not_existing_genre = "b04d45e4-e7bd-417e-a700-0049e8cae9e6"
                 'size': '1',
                 'genre': id_not_existing_genre
             },
-            {'status': 404, 'size': 1}
+            {'status': HTTPStatus.NOT_FOUND, 'size': 1}
         ),
         (
             {'sort': '-imdb_rating', 'page': '2', 'size': '20'},
-            {'status': 200, 'size': 20}
+            {'status': HTTPStatus.OK, 'size': 20}
         ),
         (
             {'sort': '-imdb_rating', 'size': '1', 'page': '-1'},
-            {'status': 422, 'size': 1}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'size': 1}
         ),
         (
             {'sort': '-imdb_rating', 'size': '-1', 'page': '1'},
-            {'status': 422, 'size': 1}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'size': 1}
         ),
         (
             {'sort': '-imdb_rating', 'size': '0', 'page': '1'},
-            {'status': 422, 'size': 1}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'size': 1}
         ),
         (
             {'sort': '-imdb_rating', 'size': '1', 'page': '0'},
-            {'status': 422, 'size': 1}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'size': 1}
         ),
     ]
 )

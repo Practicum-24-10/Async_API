@@ -1,5 +1,6 @@
-import pytest
+from http import HTTPStatus
 
+import pytest
 from tests.functional.testdata.es_data import film
 
 film = film[0]
@@ -10,35 +11,35 @@ film = film[0]
     [
         (
             {'query': 'Walter Koenig', 'size': '60', 'page': '1'},
-            {'status': 200, 'length': 1}
+            {'status': HTTPStatus.OK, 'length': 1}
         ),
         (
             {'query': 'Walter Koenig', 'size': '60', 'page': '2'},
-            {'status': 404, 'length': 1}
+            {'status': HTTPStatus.NOT_FOUND, 'length': 1}
         ),
         (
             {'query': 'Boby Fisher', 'size': '60', 'page': '1'},
-            {'status': 200, 'length': 60}
+            {'status': HTTPStatus.OK, 'length': 60}
         ),
         (
             {'query': 'Mashed potato', 'size': '60', 'page': '1'},
-            {'status': 404, 'length': 1}
+            {'status': HTTPStatus.NOT_FOUND, 'length': 1}
         ),
         (
             {'query': 'Walter Koenig', 'size': '1', 'page': '-1'},
-            {'status': 422, 'length': 1}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
         (
             {'query': 'Walter Koenig', 'size': '-1', 'page': '1'},
-            {'status': 422, 'length': 1}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
         (
             {'query': 'Walter Koenig', 'size': '0', 'page': '1'},
-            {'status': 422, 'length': 1}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
         (
             {'query': 'Walter Koenig', 'size': '1', 'page': '0'},
-            {'status': 422, 'length': 1}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
     ]
 )

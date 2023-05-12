@@ -1,5 +1,6 @@
-import pytest
+from http import HTTPStatus
 
+import pytest
 from tests.functional.testdata.es_data import person
 
 test_person = person[0]
@@ -11,7 +12,7 @@ person_id_2 = person[1]['id']
     [
         (
                 {'size': '60', 'page': '1'},
-                {'status': 200, 'length': 3, 'len_films': 1}
+                {'status': HTTPStatus.OK, 'length': 3, 'len_films': 1}
         )
     ]
 )
@@ -44,7 +45,7 @@ async def test_person_get_by_id(es_delete_data, make_get_request,
     [
         (
                 {'size': '60', 'page': '1'},
-                {'status': 200, 'length': 1,
+                {'status': HTTPStatus.OK, 'length': 1,
                  'uuid': 'cde7b6ff-32de-4807-8cd4-be95682e1ed9',
                  'title': 'The Moon', 'imdb_rating': 7.9}
         )
@@ -80,20 +81,20 @@ async def test_person_film_get_by_id(es_delete_data, make_get_request,
     [
         (
                 {'size': '1', 'page': '-1'},
-                {'status': 422, 'length': 1}
+                {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
 
         (
                 {'size': '-1', 'page': '1'},
-                {'status': 422, 'length': 1}
+                {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
         (
                 {'size': '0', 'page': '1'},
-                {'status': 422, 'length': 1}
+                {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
         (
                 {'size': '1', 'page': '0'},
-                {'status': 422, 'length': 1}
+                {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         )
     ]
 )
