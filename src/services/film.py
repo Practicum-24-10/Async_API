@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 import orjson
@@ -14,6 +14,22 @@ from src.services.mixin import MixinModel
 
 
 class FilmService(MixinModel):
+    async def _get_films(
+            self, method_name: str, query: dict[str, Any]) -> ListFilmShort | None:
+        cache_id = self._get_cache_id(method_name, query)
+        films = await self._get_from_cache(cache_id)
+        if films:
+            films = ListFilmShort(**orjson.loads(films))
+        if not films:
+            docs = await self._search_from_elastic(self.index, query)
+            if not docs:
+                return None
+            films = ListFilmShort(
+                films=[FilmShort(**i["_source"]) for i in docs]
+            )
+            await self._put_to_cache(cache_id, orjson.dumps(films.dict()))
+        return films
+
     async def get_by_id(self, film_id: str) -> Optional[Film]:
         cache_id = self._get_cache_id(self.get_by_id.__name__, film_id)
         film = await self._get_from_cache(cache_id)
@@ -47,18 +63,7 @@ class FilmService(MixinModel):
             body["query"]["nested"]["query"]["bool"]["filter"].append(
                 {"term": {"genres.id": genre}}
             )
-        cache_id = self._get_cache_id(self.home_page.__name__, body)
-        films = await self._get_from_cache(cache_id)
-        if films:
-            films = ListFilmShort(**orjson.loads(films))
-        if not films:
-            docs = await self._search_from_elastic(self.index, body)
-            if not docs:
-                return None
-            films = ListFilmShort(
-                films=[FilmShort(**i["_source"]) for i in docs]
-            )
-            await self._put_to_cache(cache_id, orjson.dumps(films.dict()))
+        films = await self._get_films(self.home_page.__name__, body)
         return films
 
     async def search_films(
@@ -75,18 +80,7 @@ class FilmService(MixinModel):
                 }
             },
         }
-        cache_id = self._get_cache_id(self.search_films.__name__, body)
-        films = await self._get_from_cache(cache_id)
-        if films:
-            films = ListFilmShort(**orjson.loads(films))
-        if not films:
-            docs = await self._search_from_elastic(self.index, body)
-            if not docs:
-                return None
-            films = ListFilmShort(
-                films=[FilmShort(**i["_source"]) for i in docs]
-            )
-            await self._put_to_cache(cache_id, orjson.dumps(films.dict()))
+        films = await self._get_films(self.search_films.__name__, body)
         return films
 
 
