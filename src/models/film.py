@@ -13,7 +13,7 @@ class Person(MovieMixin):
 
 class FilmShort(MovieMixin):
     title: str
-    imdb_rating: float
+    imdb_rating: float | None
 
 
 class ListFilmShort(BaseModel):

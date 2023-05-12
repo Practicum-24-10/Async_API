@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
-
+from src.api.v1.models import PaginatedParams
 from src.local.api.v1 import anotation
 from src.local.api.v1 import persons as errors
 from src.services.person import PersonService, get_person_service
@@ -50,23 +50,19 @@ async def person_details(
             example="9758b894-57d7-465d-b657-c5803dd5b7f7"
         )],
         person_service: PersonService = Depends(get_person_service),
-        page: Annotated[
-            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
-        ] = 1,
-        size: Annotated[
-            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
-        ] = 10,
+        pagination: PaginatedParams = Depends(),
 ) -> PersonDetail:
     """
     Метод API
     Получение всех данных персоны
     :param person_id: uuid персоны
     :param person_service:
-    :param page: страница
-    :param size: размер страницы
+    :param pagination: страница и размер страницы
     :return: данные персону в моделе Person
     """
-    person = await person_service.get_by_id(str(person_id), page, size)
+    person = await person_service.get_by_id(
+        str(person_id), pagination.page, pagination.size
+    )
     if not person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
@@ -89,24 +85,19 @@ async def person_details_film(
             example="9758b894-57d7-465d-b657-c5803dd5b7f7"
         )],
         person_service: PersonService = Depends(get_person_service),
-        page: Annotated[
-            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
-        ] = 1,
-        size: Annotated[
-            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
-        ] = 10,
+        pagination: PaginatedParams = Depends(),
 ) -> list[FilmDetail]:
     """
     Метод API
     Получение всех фильмов персоны
     :param person_id: uuid персоны
     :param person_service:
-    :param page: страница
-    :param size: размер страницы
+    :param pagination: страница и размер страницы
     :return: список данных фильмов в моделе PersonFilm
     """
-    films_person = await person_service.get_person_films(str(person_id), page,
-                                                         size)
+    films_person = await person_service.get_person_films(
+        str(person_id), pagination.page, pagination.size
+    )
     if not films_person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
@@ -126,23 +117,19 @@ async def person_search(
                        example="William Shatner", min_length=1)
         ],
         person_service: PersonService = Depends(get_person_service),
-        page: Annotated[
-            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
-        ] = 1,
-        size: Annotated[
-            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
-        ] = 10,
+        pagination: PaginatedParams = Depends(),
 ) -> list[PersonDetail]:
     """
     Метод API
     Поиск по имени персоны
     :param query: запрос на поиск
-    :param page: страница
     :param person_service:
-    :param size: размер страницы
+    :param pagination: страница и размер страницы
     :return: список найденых персон в моделях Person
     """
-    search_person = await person_service.search_person(query, page, size)
+    search_person = await person_service.search_person(
+        query, pagination.page, pagination.size
+    )
     if not search_person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
