@@ -2,9 +2,9 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path
 from pydantic import BaseModel, Field
-
+from src.api.v1.models import PaginatedParams
 from src.local.api.v1 import anotation
 from src.local.api.v1 import genres as errors
 from src.services.genre import GenreService, get_genre_service
@@ -60,22 +60,16 @@ async def genre_details(
 )
 async def genre_all(
         genre_service: GenreService = Depends(get_genre_service),
-        page: Annotated[
-            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
-        ] = 1,
-        size: Annotated[
-            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
-        ] = 10,
+        pagination: PaginatedParams = Depends(),
 ) -> list[Genre]:
     """
     Метод API
     Получения спика жанров кино
     :param genre_service:
-    :param page: страница
-    :param size: размер страницы
+    :param pagination: страница и размер страницы
     :return: список жанров кино в моделях Genre
     """
-    genres = await genre_service.get_all(page, size)
+    genres = await genre_service.get_all(pagination.page, pagination.size)
     if not genres:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,

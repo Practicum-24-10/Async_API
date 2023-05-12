@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
-
+from src.api.v1.models import PaginatedParams
 from src.local.api.v1 import anotation
 from src.local.api.v1 import films as errors
 from src.models.film import Genre, Person
@@ -27,8 +27,8 @@ class UUIDMixin(BaseModel):
 class FilmShort(UUIDMixin, BaseModel):
     title: str = Field(title="Название фильма",
                        example="Star Trek Continues")
-    imdb_rating: float = Field(title="Рейтинг фильма",
-                               example=8.0)
+    imdb_rating: float | None = Field(title="Рейтинг фильма",
+                                      example=8.0)
 
 
 class FilmDetail(FilmShort):
@@ -46,19 +46,14 @@ class FilmDetail(FilmShort):
             summary="Главная страница")
 async def film_list(
         sort: OrderingFilms = OrderingFilms.popular,
-        page: Annotated[
-            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
-        ] = 1,
-        size: Annotated[
-            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
-        ] = 10,
+        pagination: PaginatedParams = Depends(),
         genre: Annotated[
             UUID | None, Query(description=anotation.GENRE_ID)] = None,
         film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.home_page(
-        size=size,
-        page=page,
+        size=pagination.size,
+        page=pagination.page,
         sort=sort,
         genre=genre)
     if not films:
@@ -77,18 +72,13 @@ async def film_search(
             str, Query(description=anotation.FILMS_QUERY,
                        example="Star", min_length=1)
         ],
-        page: Annotated[
-            int, Query(description=anotation.PAGINATION_PAGE, ge=1)
-        ] = 1,
-        size: Annotated[
-            int, Query(description=anotation.PAGINATION_SIZE, ge=1)
-        ] = 10,
+        pagination: PaginatedParams = Depends(),
         film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmShort]:
     films = await film_service.search_films(
         query=query,
-        size=size,
-        page=page)
+        size=pagination.size,
+        page=pagination.page)
     if not films:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
