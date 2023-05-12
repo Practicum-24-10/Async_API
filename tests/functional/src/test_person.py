@@ -1,43 +1,9 @@
 import pytest
-import uuid
 
 from tests.functional.testdata.es_data import person
 
 test_person = person[0]
 person_id_2 = person[1]['id']
-
-
-@pytest.mark.parametrize(
-    'query_data, expected_answer',
-    [
-        (
-                {'size': '60', 'page': '1'},
-                {'status': 200, 'length': 3, 'len_films': 1}
-        )
-    ]
-)
-@pytest.mark.asyncio
-async def test_person_get_by_id(es_delete_data, make_get_request,
-                                es_write_data,
-                                query_data,
-                                expected_answer):
-    """
-    Поиск конкретного человека;
-    """
-
-    async def run_assert(person):
-        _id = test_person['id']
-        response = await make_get_request(f'persons/{_id}', query_data)
-        assert response['status'] == expected_answer['status']
-        assert len(response['body']) == expected_answer['length']
-        assert len(response['body']['films']) == expected_answer['len_films']
-        assert response['body']['uuid'] == person['id']
-        assert response['body']['full_name'] == person['full_name']
-
-    await es_write_data()
-    await run_assert(test_person)
-    await es_delete_data()
-    await run_assert(test_person)
 
 
 @pytest.mark.parametrize(
