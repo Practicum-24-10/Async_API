@@ -1,5 +1,6 @@
-import pytest
+from http import HTTPStatus
 
+import pytest
 from tests.functional.testdata.es_data import genre
 
 genre_id = genre[0]['id']
@@ -10,7 +11,7 @@ genre_id = genre[0]['id']
     [
         (
                 {'size': '1000', 'page': '1'},
-                {'status': 200, 'length': 62}
+                {'status': HTTPStatus.OK, 'length': 62}
         )
     ]
 )
@@ -38,7 +39,7 @@ async def test_genre_all(es_delete_data, make_get_request, es_write_data,
     [
         (
                 {'id': genre_id},
-                {'status': 200, 'id': genre_id}
+                {'status': HTTPStatus.OK, 'id': genre_id}
         )
     ]
 )
@@ -65,20 +66,20 @@ async def test_genre_single(make_get_request, es_write_data, query_data,
     [
         (
                 {'size': '1', 'page': '-1'},
-                {'status': 422, 'length': 1}
+                {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
 
         (
                 {'size': '-1', 'page': '1'},
-                {'status': 422, 'length': 1}
+                {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
         (
                 {'size': '0', 'page': '1'},
-                {'status': 422, 'length': 1}
+                {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         ),
         (
                 {'size': '1', 'page': '0'},
-                {'status': 422, 'length': 1}
+                {'status': HTTPStatus.UNPROCESSABLE_ENTITY, 'length': 1}
         )
     ]
 )

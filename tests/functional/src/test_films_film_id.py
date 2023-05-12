@@ -1,5 +1,6 @@
-import pytest
+from http import HTTPStatus
 
+import pytest
 from tests.functional.testdata.es_data import film
 
 film = film[0]
@@ -11,15 +12,15 @@ id_not_existing_film = '6c162475-c7ed-4461-9184-001ef3d9f26e'
     [
         (
             {'id': film['id']},
-            {'status': 200}
+            {'status': HTTPStatus.OK}
         ),
         (
             {'id': 'notValidId'},
-            {'status': 422}
+            {'status': HTTPStatus.UNPROCESSABLE_ENTITY}
         ),
         (
             {'id': id_not_existing_film},
-            {'status': 404}
+            {'status': HTTPStatus.NOT_FOUND}
         ),
     ]
 )
