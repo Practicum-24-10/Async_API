@@ -19,3 +19,7 @@ class AppSettings(BaseSettings):
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+PUBLIC_KEY_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+PUBLIC_KEY = os.path.join(PUBLIC_KEY_DIR, os.environ.get("PUBLIC_KEY"))

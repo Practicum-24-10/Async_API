@@ -3,9 +3,10 @@ import logging
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
-
 from src.api.v1 import films, genres, persons
-from src.core.config import AppSettings
+from src.auth.abc_key import RsaKey
+from src.core.config import AppSettings, PUBLIC_KEY
+from src.auth import rsa_key
 from src.core.logger import LOGGING
 from src.db import elastic, redis_db
 from src.db.cache import RedisCache
@@ -24,6 +25,7 @@ app = FastAPI(
 async def startup():
     redis_db.redis = RedisCache(host=config.redis_host, port=config.redis_port)
     elastic.es = ElasticStorage(hosts=[f"{config.es_host}:{config.es_port}"])
+    rsa_key.pk = RsaKey(path=PUBLIC_KEY, algorithms=['RS256'])
 
 
 @app.on_event("shutdown")
